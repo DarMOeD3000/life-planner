@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Мой план">
+<meta name="theme-color" content="#0F0F12">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>Мой план</title>
+<style>
+:root {
+  --bg: #0F0F12;
+  --bg2: #18181C;
+  --bg3: #222228;
+  --bg4: #2A2A32;
+  --surface: #1C1C22;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #F0EFF4;
+  --text2: #9998A8;
+  --text3: #666574;
+  --accent: #7C6EF5;
+  --accent2: #9B8FFB;
+  --green: #34C97E;
+  --red: #FF4D4D;
+  --orange: #FF9A3C;
+  --blue: #3B9EFF;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bot: env(safe-area-inset-bottom, 34px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, sans-serif; color: var(--text); }
+
+/* LAYOUT */
+.app { display: flex; flex-direction: column; height: 100%; }
+.content { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: calc(var(--safe-top) + 60px) 0 calc(var(--safe-bot) + 70px); }
+.content::-webkit-scrollbar { display: none; }
+
+/* TOP BAR */
+.topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: calc(var(--safe-top) + 10px) 20px 12px; background: rgba(15,15,18,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 0.5px solid var(--border); }
+.topbar-inner { display: flex; align-items: center; justify-content: space-between; }
+.page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+.page-date { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+/* BOTTOM NAV */
+.bottomnav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 10px 6px calc(var(--safe-bot) + 6px); background: rgba(15,15,18,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 0.5px solid var(--border); display: flex; gap: 2px; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; border-radius: 12px; cursor: pointer; transition: background 0.15s; border: none; background: transparent; color: var(--text2); }
+.nav-item.active { color: var(--accent2); }
+.nav-item .nav-icon { font-size: 22px; line-height: 1; }
+.nav-item .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.2px; }
+
+/* SCREENS */
+.screen { display: none; padding: 0 16px; }
+.screen.active { display: block; }
+
+/* SECTION HEADERS */
+.sec-header { font-size: 13px; font-weight: 600; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; padding: 20px 0 8px; }
+
+/* CARDS */
+.card { background: var(--bg2); border-radius: 16px; border: 0.5px solid var(--border); overflow: hidden; margin-bottom: 12px; }
+.card-pad { padding: 16px; }
+
+/* STAT ROW */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.stat-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.stat-box { background: var(--bg2); border-radius: 16px; border: 0.5px solid var(--border); padding: 14px 14px 12px; }
+.stat-box .s-label { font-size: 11px; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
+.stat-box .s-val { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; }
+.stat-box .s-unit { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* FORM */
+.form-group { margin-bottom: 12px; }
+.form-group label { font-size: 12px; color: var(--text2); font-weight: 500; display: block; margin-bottom: 6px; letter-spacing: 0.2px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px;
+  color: var(--text); font-size: 15px; padding: 12px 14px; outline: none;
+  font-family: -apple-system, sans-serif; -webkit-appearance: none; appearance: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239998A8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* BUTTONS */
+.btn-add { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; transition: opacity 0.1s; }
+.btn-add:active { opacity: 0.8; }
+.btn-small { padding: 6px 12px; border-radius: 8px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; font-family: inherit; }
+.btn-small:active { background: var(--bg3); }
+.btn-danger { border-color: rgba(255,77,77,0.4); color: var(--red); }
+
+/* LIST ITEMS */
+.list-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 0.5px solid var(--border); }
+.list-item:last-child { border-bottom: none; }
+.li-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.li-body { flex: 1; min-width: 0; }
+.li-name { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.li-right { text-align: right; flex-shrink: 0; }
+.li-amount { font-size: 15px; font-weight: 600; }
+.li-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
+
+/* WEEK CALENDAR */
+.week-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 4px; }
+.day-box { background: var(--bg2); border-radius: 12px; border: 0.5px solid var(--border); padding: 8px 4px 6px; text-align: center; cursor: pointer; }
+.day-box.today { border-color: var(--accent); background: rgba(124,110,245,0.12); }
+.day-box .dn { font-size: 10px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+.day-box .dd { font-size: 17px; font-weight: 700; margin: 2px 0 4px; }
+.day-box.today .dd { color: var(--accent2); }
+.dots { display: flex; gap: 3px; justify-content: center; }
+.dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* PROGRESS */
+.progress-track { height: 6px; background: var(--bg3); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
+
+/* CREDIT CARD */
+.credit-card { background: var(--bg2); border-radius: 16px; border: 0.5px solid var(--border); padding: 16px; margin-bottom: 10px; }
+.credit-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.credit-name { font-size: 16px; font-weight: 600; }
+.credit-info { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; color: var(--text2); }
+.credit-actions { display: flex; gap: 8px; align-items: center; }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 40px 20px; color: var(--text2); }
+.empty .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.3; }
+.empty p { font-size: 14px; }
+
+/* TODAY ITEMS */
+.today-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 0.5px solid var(--border); }
+.today-item:last-child { border-bottom: none; }
+.ti-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.ti-body { flex: 1; }
+.ti-name { font-size: 14px; font-weight: 500; }
+.ti-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+/* COLOR BADGES */
+.badge-purple { background: rgba(124,110,245,0.15); color: #9B8FFB; }
+.badge-green { background: rgba(52,201,126,0.15); color: #34C97E; }
+.badge-red { background: rgba(255,77,77,0.15); color: #FF6B6B; }
+.badge-orange { background: rgba(255,154,60,0.15); color: #FFA94D; }
+.badge-blue { background: rgba(59,158,255,0.15); color: #5BADFF; }
+
+/* TOGGLE for income/expense */
+.type-toggle { display: flex; background: var(--bg3); border-radius: 10px; padding: 3px; margin-bottom: 12px; border: 0.5px solid var(--border); }
+.type-toggle button { flex: 1; padding: 9px; border: none; border-radius: 8px; background: transparent; color: var(--text2); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.type-toggle button.active-income { background: rgba(52,201,126,0.2); color: var(--green); }
+.type-toggle button.active-expense { background: rgba(255,77,77,0.2); color: var(--red); }
+
+/* MONTH BADGE */
+.month-tag { font-size: 11px; font-weight: 600; color: var(--text2); background: var(--bg3); padding: 3px 10px; border-radius: 6px; display: inline-block; margin: 10px 0 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="page-title" id="page-title">График</div>
+        <div class="page-date" id="page-date"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- SCHEDULE -->
+    <div class="screen active" id="screen-schedule">
+      <div class="sec-header">Эта неделя</div>
+      <div class="week-row" id="week-row"></div>
+      <div class="sec-header">Сегодня</div>
+      <div class="card" id="today-list"></div>
+    </div>
+
+    <!-- WORKOUT -->
+    <div class="screen" id="screen-workout">
+      <div class="stat-row" id="workout-stats"></div>
+      <div class="sec-header">Новая тренировка</div>
+      <div class="card card-pad">
+        <div class="form-row">
+          <div class="form-group"><label>Тип</label>
+            <select id="wType">
+              <option>💪 Силовая</option><option>🏃 Бег</option><option>🚴 Кардио</option>
+              <option>🏊 Плавание</option><option>🧘 Йога</option><option>⚽ Спорт</option><option>🏋️ Другое</option>
+            </select></div>
+          <div class="form-group"><label>Дата</label><input type="date" id="wDate"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Длительность (мин)</label><input type="number" id="wDur" placeholder="60" inputmode="numeric"></div>
+          <div class="form-group"><label>Калории</label><input type="number" id="wCal" placeholder="400" inputmode="numeric"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Интенсивность</label>
+            <select id="wInten"><option>Лёгкая</option><option>Средняя</option><option>Высокая</option></select></div>
+          <div class="form-group"><label>Заметки</label><input type="text" id="wNote" placeholder="3×12, жим…"></div>
+        </div>
+        <button class="btn-add" onclick="addWorkout()">+ Добавить тренировку</button>
+      </div>
+      <div class="sec-header">История</div>
+      <div class="card" id="workout-list"></div>
+    </div>
+
+    <!-- WORK -->
+    <div class="screen" id="screen-work">
+      <div class="stat-row" id="work-stats"></div>
+      <div class="sec-header">Новая запись</div>
+      <div class="card card-pad">
+        <div class="form-row">
+          <div class="form-group"><label>Тип</label>
+            <select id="workType">
+              <option>📅 Смена</option><option>👥 Встреча</option><option>✅ Задача</option><option>🚨 Дедлайн</option>
+            </select></div>
+          <div class="form-group"><label>Дата</label><input type="date" id="workDate"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Начало</label><input type="time" id="workStart" value="09:00"></div>
+          <div class="form-group"><label>Конец</label><input type="time" id="workEnd" value="18:00"></div>
+        </div>
+        <div class="form-group"><label>Описание</label><input type="text" id="workDesc" placeholder="Встреча с командой, отчёт…"></div>
+        <button class="btn-add" onclick="addWork()">+ Добавить запись</button>
+      </div>
+      <div class="sec-header">Расписание</div>
+      <div class="card" id="work-list"></div>
+    </div>
+
+    <!-- FINANCE -->
+    <div class="screen" id="screen-finance">
+      <div class="stat-row" id="fin-stats"></div>
+      <div class="sec-header">Новая транзакция</div>
+      <div class="card card-pad">
+        <div class="type-toggle">
+          <button id="btn-income" class="active-income" onclick="setFinType('income')">↑ Доход</button>
+          <button id="btn-expense" onclick="setFinType('expense')">↓ Расход</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Сумма (₽)</label><input type="number" id="finAmt" placeholder="5 000" inputmode="numeric"></div>
+          <div class="form-group"><label>Дата</label><input type="date" id="finDate"></div>
+        </div>
+        <div class="form-group"><label>Категория</label>
+          <select id="finCat">
+            <option>💰 Зарплата</option><option>💻 Фриланс</option><option>🎁 Прочий доход</option>
+            <option>🛒 Продукты</option><option>🚗 Транспорт</option><option>🏠 Коммунальные</option>
+            <option>👕 Одежда</option><option>💊 Здоровье</option><option>🎮 Развлечения</option><option>🍕 Кафе</option>
+            <option>📱 Подписки</option><option>📦 Другое</option>
+          </select></div>
+        <div class="form-group"><label>Комментарий</label><input type="text" id="finNote" placeholder="Аванс, продукты…"></div>
+        <button class="btn-add" onclick="addFinance()">+ Добавить</button>
+      </div>
+      <div class="sec-header">Транзакции</div>
+      <div class="card" id="fin-list"></div>
+    </div>
+
+    <!-- CREDITS -->
+    <div class="screen" id="screen-credits">
+      <div class="stat-row" id="cr-stats"></div>
+      <div class="sec-header">Новый кредит</div>
+      <div class="card card-pad">
+        <div class="form-group"><label>Название (банк / тип)</label><input type="text" id="crName" placeholder="Сбербанк — потребительский"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Общая сумма (₽)</label><input type="number" id="crTotal" placeholder="300 000" inputmode="numeric"></div>
+          <div class="form-group"><label>Остаток долга (₽)</label><input type="number" id="crRemain" placeholder="150 000" inputmode="numeric"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Платёж в месяц (₽)</label><input type="number" id="crPay" placeholder="8 000" inputmode="numeric"></div>
+          <div class="form-group"><label>Ставка (%/год)</label><input type="number" id="crRate" placeholder="14.5" step="0.1" inputmode="decimal"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Следующий платёж</label><input type="date" id="crNext"></div>
+          <div class="form-group"><label>Статус</label>
+            <select id="crStatus"><option>Активный</option><option>Просроченный</option><option>Закрыт</option></select></div>
+        </div>
+        <button class="btn-add" onclick="addCredit()">+ Добавить кредит</button>
+      </div>
+      <div class="sec-header">Мои кредиты</div>
+      <div id="cr-list"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottomnav">
+    <button class="nav-item active" onclick="goTo('schedule','График')" data-s="schedule">
+      <span class="nav-icon">📅</span><span class="nav-label">График</span>
+    </button>
+    <button class="nav-item" onclick="goTo('workout','Тренировки')" data-s="workout">
+      <span class="nav-icon">💪</span><span class="nav-label">Тренировки</span>
+    </button>
+    <button class="nav-item" onclick="goTo('work','Работа')" data-s="work">
+      <span class="nav-icon">💼</span><span class="nav-label">Работа</span>
+    </button>
+    <button class="nav-item" onclick="goTo('finance','Финансы')" data-s="finance">
+      <span class="nav-icon">💰</span><span class="nav-label">Финансы</span>
+    </button>
+    <button class="nav-item" onclick="goTo('credits','Кредиты')" data-s="credits">
+      <span class="nav-icon">🏦</span><span class="nav-label">Кредиты</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────
+const load = k => { try { return JSON.parse(localStorage.getItem('lp2_'+k)||'[]'); } catch(e) { return []; } };
+const save = (k,v) => { try { localStorage.setItem('lp2_'+k, JSON.stringify(v)); } catch(e) {} };
+
+let S = {
+  workouts: load('workouts'),
+  work: load('work'),
+  finance: load('finance'),
+  credits: load('credits'),
+  finType: 'income'
+};
+
+// ─── DATE HELPERS ────────────────────────────────
+const now = new Date();
+const todayStr = now.toISOString().slice(0,10);
+const monthStr = now.toISOString().slice(0,7);
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}.${m}.${y}`;
+}
+function fmt(n) { return Math.round(n||0).toLocaleString('ru-RU'); }
+
+// set all date inputs to today
+document.querySelectorAll('input[type=date]').forEach(el => el.value = todayStr);
+
+// ─── NAVIGATION ──────────────────────────────────
+function goTo(screen, title) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  document.querySelector('[data-s="'+screen+'"]').classList.add('active');
+  document.getElementById('page-title').textContent = title;
+  render();
+  document.querySelector('.content').scrollTo(0,0);
+}
+
+// date in topbar
+const days = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+document.getElementById('page-date').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+
+// ─── ADD FUNCTIONS ───────────────────────────────
+function addWorkout() {
+  const type = document.getElementById('wType').value;
+  const date = document.getElementById('wDate').value;
+  const dur = parseInt(document.getElementById('wDur').value)||0;
+  const cal = parseInt(document.getElementById('wCal').value)||0;
+  const inten = document.getElementById('wInten').value;
+  const note = document.getElementById('wNote').value.trim();
+  if (!date) return;
+  S.workouts.unshift({ id: Date.now(), type, date, dur, cal, inten, note });
+  save('workouts', S.workouts);
+  document.getElementById('wNote').value='';
+  document.getElementById('wDur').value='';
+  document.getElementById('wCal').value='';
+  render();
+}
+
+function delWorkout(id) {
+  S.workouts = S.workouts.filter(w=>w.id!==id);
+  save('workouts', S.workouts);
+  render();
+}
+
+function addWork() {
+  const type = document.getElementById('workType').value;
+  const date = document.getElementById('workDate').value;
+  const start = document.getElementById('workStart').value;
+  const end = document.getElementById('workEnd').value;
+  const desc = document.getElementById('workDesc').value.trim();
+  if (!date || !desc) return;
+  S.work.unshift({ id: Date.now(), type, date, start, end, desc });
+  save('work', S.work);
+  document.getElementById('workDesc').value='';
+  render();
+}
+
+function delWork(id) {
+  S.work = S.work.filter(w=>w.id!==id);
+  save('work', S.work);
+  render();
+}
+
+function setFinType(t) {
+  S.finType = t;
+  document.getElementById('btn-income').className = t==='income'?'active-income':'';
+  document.getElementById('btn-expense').className = t==='expense'?'active-expense':'';
+}
+
+function addFinance() {
+  const amt = parseFloat(document.getElementById('finAmt').value)||0;
+  const date = document.getElementById('finDate').value;
+  const cat = document.getElementById('finCat').value;
+  const note = document.getElementById('finNote').value.trim();
+  if (!date || !amt) return;
+  S.finance.unshift({ id: Date.now(), type: S.finType, amt, date, cat, note });
+  save('finance', S.finance);
+  document.getElementById('finAmt').value='';
+  document.getElementById('finNote').value='';
+  render();
+}
+
+function delFinance(id) {
+  S.finance = S.finance.filter(f=>f.id!==id);
+  save('finance', S.finance);
+  render();
+}
+
+function addCredit() {
+  const name = document.getElementById('crName').value.trim();
+  const total = parseFloat(document.getElementById('crTotal').value)||0;
+  const remain = parseFloat(document.getElementById('crRemain').value)||0;
+  const pay = parseFloat(document.getElementById('crPay').value)||0;
+  const rate = parseFloat(document.getElementById('crRate').value)||0;
+  const nextDate = document.getElementById('crNext').value;
+  const status = document.getElementById('crStatus').value;
+  if (!name || !total) return;
+  S.credits.push({ id: Date.now(), name, total, remain, pay, rate, nextDate, status });
+  save('credits', S.credits);
+  ['crName','crTotal','crRemain','crPay','crRate'].forEach(id=>document.getElementById(id).value='');
+  render();
+}
+
+function delCredit(id) {
+  S.credits = S.credits.filter(c=>c.id!==id);
+  save('credits', S.credits);
+  render();
+}
+
+function payCredit(id) {
+  const c = S.credits.find(c=>c.id===id);
+  if (!c) return;
+  c.remain = Math.max(0, c.remain - c.pay);
+  if (c.remain === 0) c.status = 'Закрыт';
+  save('credits', S.credits);
+  render();
+}
+
+// ─── RENDER ──────────────────────────────────────
+function render() {
+  renderSchedule();
+  renderWorkouts();
+  renderWork();
+  renderFinance();
+  renderCredits();
+}
+
+function renderSchedule() {
+  // week
+  const dow = (now.getDay()+6)%7;
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate()-dow);
+  const dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  let wHtml = '';
+  for (let i=0;i<7;i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate()+i);
+    const ds = d.toISOString().slice(0,10);
+    const isToday = ds===todayStr;
+    const t = S.workouts.some(w=>w.date===ds);
+    const w = S.work.some(w=>w.date===ds);
+    const f = S.finance.some(f=>f.date===ds);
+    wHtml += `<div class="day-box${isToday?' today':''}">
+      <div class="dn">${dayNames[i]}</div>
+      <div class="dd">${d.getDate()}</div>
+      <div class="dots">
+        ${t?'<div class="dot" style="background:#7C6EF5"></div>':''}
+        ${w?'<div class="dot" style="background:#3B9EFF"></div>':''}
+        ${f?'<div class="dot" style="background:#34C97E"></div>':''}
+      </div>
+    </div>`;
+  }
+  document.getElementById('week-row').innerHTML = wHtml;
+
+  // today
+  const items = [
+    ...S.workouts.filter(w=>w.date===todayStr).map(w=>({ color:'#7C6EF5', name: w.type, sub: w.dur+'мин'+(w.cal?' · '+w.cal+'ккал':'') })),
+    ...S.work.filter(w=>w.date===todayStr).map(w=>({ color:'#3B9EFF', name: w.desc, sub: w.start+' – '+w.end })),
+    ...S.finance.filter(f=>f.date===todayStr).map(f=>({ color: f.type==='income'?'#34C97E':'#FF4D4D', name: f.cat+(f.note?' — '+f.note:''), sub: (f.type==='income'?'+ ':'-')+fmt(f.amt)+' ₽' })),
+  ];
+  const box = document.getElementById('today-list');
+  if (!items.length) { box.innerHTML='<div class="empty"><div class="empty-icon">✨</div><p>Нет записей на сегодня</p></div>'; return; }
+  box.innerHTML = items.map(it=>`
+    <div class="today-item">
+      <div class="ti-dot" style="background:${it.color}"></div>
+      <div class="ti-body"><div class="ti-name">${it.name}</div><div class="ti-sub">${it.sub}</div></div>
+    </div>`).join('');
+}
+
+function renderWorkouts() {
+  const all = S.workouts;
+  const thisM = all.filter(w=>w.date&&w.date.startsWith(monthStr));
+  document.getElementById('workout-stats').innerHTML = `
+    <div class="stat-box"><div class="s-label">В этом месяце</div><div class="s-val" style="color:#7C6EF5">${thisM.length}</div><div class="s-unit">тренировок</div></div>
+    <div class="stat-box"><div class="s-label">Сожжено</div><div class="s-val" style="color:#FF9A3C">${fmt(all.reduce((s,w)=>s+(w.cal||0),0))}</div><div class="s-unit">ккал всего</div></div>`;
+
+  const list = document.getElementById('workout-list');
+  if (!all.length) { list.innerHTML='<div class="empty"><div class="empty-icon">💪</div><p>Ещё нет тренировок</p></div>'; return; }
+
+  const intenColor = { 'Лёгкая':'#34C97E', 'Средняя':'#FF9A3C', 'Высокая':'#FF4D4D' };
+  const intenBg = { 'Лёгкая':'rgba(52,201,126,0.15)', 'Средняя':'rgba(255,154,60,0.15)', 'Высокая':'rgba(255,77,77,0.15)' };
+
+  list.innerHTML = all.slice(0,30).map(w=>`
+    <div class="list-item">
+      <div class="li-icon" style="background:rgba(124,110,245,0.15);font-size:20px">${w.type.split(' ')[0]}</div>
+      <div class="li-body">
+        <div class="li-name">${w.type.split(' ').slice(1).join(' ')||w.type}</div>
+        <div class="li-meta">${fmtDate(w.date)} · ${w.dur}мин${w.cal?' · '+w.cal+'ккал':''}${w.note?' · '+w.note:''}</div>
+      </div>
+      <div class="li-right">
+        <div class="li-badge" style="background:${intenBg[w.inten]||''};color:${intenColor[w.inten]||''}">${w.inten}</div>
+        <button class="btn-small btn-danger" onclick="delWorkout(${w.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderWork() {
+  const all = S.work;
+  const thisM = all.filter(w=>w.date&&w.date.startsWith(monthStr));
+  const hours = all.filter(w=>w.start&&w.end).reduce((s,w)=>{
+    const [h1,m1]=w.start.split(':').map(Number);
+    const [h2,m2]=w.end.split(':').map(Number);
+    return s+Math.max(0,(h2*60+m2-h1*60-m1)/60);
+  },0);
+  document.getElementById('work-stats').innerHTML = `
+    <div class="stat-box"><div class="s-label">В этом месяце</div><div class="s-val" style="color:#3B9EFF">${thisM.length}</div><div class="s-unit">записей</div></div>
+    <div class="stat-box"><div class="s-label">Часов работы</div><div class="s-val" style="color:#9B8FFB">${hours.toFixed(1)}</div><div class="s-unit">всего</div></div>`;
+
+  const list = document.getElementById('work-list');
+  if (!all.length) { list.innerHTML='<div class="empty"><div class="empty-icon">💼</div><p>Ещё нет записей</p></div>'; return; }
+  list.innerHTML = all.slice(0,30).map(w=>`
+    <div class="list-item">
+      <div class="li-icon" style="background:rgba(59,158,255,0.15);font-size:20px">${w.type.split(' ')[0]}</div>
+      <div class="li-body">
+        <div class="li-name">${w.desc}</div>
+        <div class="li-meta">${fmtDate(w.date)} · ${w.start} – ${w.end}</div>
+      </div>
+      <div class="li-right">
+        <button class="btn-small btn-danger" onclick="delWork(${w.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderFinance() {
+  const inc = S.finance.filter(f=>f.type==='income');
+  const exp = S.finance.filter(f=>f.type==='expense');
+  const totalInc = inc.reduce((s,f)=>s+f.amt,0);
+  const totalExp = exp.reduce((s,f)=>s+f.amt,0);
+  const mInc = inc.filter(f=>f.date&&f.date.startsWith(monthStr)).reduce((s,f)=>s+f.amt,0);
+  const mExp = exp.filter(f=>f.date&&f.date.startsWith(monthStr)).reduce((s,f)=>s+f.amt,0);
+
+  document.getElementById('fin-stats').innerHTML = `
+    <div class="stat-box"><div class="s-label">Баланс</div><div class="s-val" style="color:${totalInc-totalExp>=0?'#34C97E':'#FF4D4D'}">${fmt(totalInc-totalExp)} ₽</div></div>
+    <div class="stat-box"><div class="s-label">Расход в месяц</div><div class="s-val" style="color:#FF4D4D">${fmt(mExp)} ₽</div></div>`;
+
+  const list = document.getElementById('fin-list');
+  if (!S.finance.length) { list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><p>Нет транзакций</p></div>'; return; }
+  list.innerHTML = S.finance.slice(0,50).map(f=>`
+    <div class="list-item">
+      <div class="li-icon" style="background:${f.type==='income'?'rgba(52,201,126,0.15)':'rgba(255,77,77,0.15)'};font-size:20px">${f.cat.split(' ')[0]}</div>
+      <div class="li-body">
+        <div class="li-name">${f.cat.split(' ').slice(1).join(' ')||f.cat}${f.note?' — '+f.note:''}</div>
+        <div class="li-meta">${fmtDate(f.date)}</div>
+      </div>
+      <div class="li-right">
+        <div class="li-amount" style="color:${f.type==='income'?'#34C97E':'#FF4D4D'}">${f.type==='income'?'+':'-'}${fmt(f.amt)} ₽</div>
+        <div style="margin-top:4px"><button class="btn-small btn-danger" onclick="delFinance(${f.id})">✕</button></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderCredits() {
+  const active = S.credits.filter(c=>c.status!=='Закрыт');
+  const totalDebt = active.reduce((s,c)=>s+(c.remain||0),0);
+  const totalPay = active.reduce((s,c)=>s+(c.pay||0),0);
+
+  document.getElementById('cr-stats').innerHTML = `
+    <div class="stat-box"><div class="s-label">Общий долг</div><div class="s-val" style="color:#FF4D4D">${fmt(totalDebt)} ₽</div></div>
+    <div class="stat-box"><div class="s-label">Платёж/мес</div><div class="s-val" style="color:#FF9A3C">${fmt(totalPay)} ₽</div></div>`;
+
+  const list = document.getElementById('cr-list');
+  if (!S.credits.length) { list.innerHTML='<div class="empty"><div class="empty-icon">🏦</div><p>Нет кредитов</p></div>'; return; }
+
+  list.innerHTML = S.credits.map(c=>{
+    const pct = c.total>0 ? Math.min(100,Math.round((1-c.remain/c.total)*100)) : 100;
+    const fillColor = pct>=100?'#34C97E':pct>=50?'#3B9EFF':'#FF9A3C';
+    const statusStyle = c.status==='Закрыт'?'badge-green':c.status==='Просроченный'?'badge-red':'badge-blue';
+    const months = c.pay>0&&c.remain>0 ? Math.ceil(c.remain/c.pay) : 0;
+    return `<div class="credit-card">
+      <div class="credit-top">
+        <div style="flex:1;min-width:0">
+          <div class="credit-name">${c.name}</div>
+          <div class="credit-info">
+            <span>Долг: <b>${fmt(c.remain)} ₽</b></span>
+            <span>${fmt(c.pay)} ₽/мес</span>
+            ${c.rate?`<span>${c.rate}%</span>`:''}
+            ${months?`<span>~${months} мес.</span>`:''}
+          </div>
+        </div>
+        <div class="credit-actions">
+          <span class="li-badge ${statusStyle}">${c.status}</span>
+          ${c.status!=='Закрыт'?`<button class="btn-small" onclick="payCredit(${c.id})" style="background:rgba(52,201,126,0.15);color:#34C97E;border-color:rgba(52,201,126,0.3)">✓</button>`:''}
+          <button class="btn-small btn-danger" onclick="delCredit(${c.id})">✕</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:10px">
+        <span>Погашено ${pct}%</span>
+        <span>${fmt(c.total-c.remain)} / ${fmt(c.total)} ₽</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+      ${c.nextDate?`<div style="font-size:12px;color:var(--text2);margin-top:8px">📅 Следующий платёж: ${fmtDate(c.nextDate)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ─── SERVICE WORKER ──────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+render();
+</script>
+</body>
+</html>
